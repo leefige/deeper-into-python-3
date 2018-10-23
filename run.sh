@@ -1,24 +1,20 @@
 #!/bin/bash
-# checkout
-git checkout -B gh-pages
-git pull
-
 # clear
 ./publish.sh clear
-
-# merge
-git merge master
 
 # publish
 ./publish.sh
 
+# update docs
+rm -r docs
+mkdir docs
+mv index.html docs/index.html
+mv pages docs/pages
+
 # commit & push
 git add .
 git commit -m "Update pages: `date +%Y-%m-%d,%H:%m:%S`"
-git push origin gh-pages
-
-# checkout
-git checkout master
+git push
 
 # clear
 ./publish.sh clear
