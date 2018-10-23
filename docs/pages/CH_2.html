@@ -13180,6 +13180,7 @@ div#notebook {
 <p>Type objects are exceptions to the rule above; the standard types are represented by statically initialized type objects.</p>
 <h3 id="2.-Garbage-collecting">2. Garbage collecting<a class="anchor-link" href="#2.-Garbage-collecting">&#182;</a></h3><p>Special rules apply to the use of objects to ensure they are properly garbage-collected.</p>
 <h3 id="3.-PyObject-&amp;-PyVarObject">3. PyObject &amp; PyVarObject<a class="anchor-link" href="#3.-PyObject-&amp;-PyVarObject">&#182;</a></h3><p>Firt about some essential data type definitions like <code>Py_ssize_t</code>:</p>
+<p>[Includes/pyport.h]</p>
 <div class="highlight"><pre><span></span><span class="cm">/* uintptr_t is the C9X name for an unsigned integral type such that a</span>
 <span class="cm"> * legitimate void* can be cast to uintptr_t and then back to void* again</span>
 <span class="cm"> * without loss of information.  Similarly for intptr_t, wrt a signed</span>
@@ -13201,6 +13202,7 @@ div#notebook {
 <span class="cp">#endif</span>
 </pre></div>
 <p>Then let's look at <code>PyObject</code> &amp; <code>PyVarObject</code>:</p>
+<p>[Includes/object.h]</p>
 <div class="highlight"><pre><span></span><span class="cm">/* Nothing is actually declared to be a PyObject, but every pointer to</span>
 <span class="cm"> * a Python object can be cast to a PyObject*.  This is inheritance built</span>
 <span class="cm"> * by hand.  Similarly every pointer to a variable-size Python object can,</span>
@@ -13224,6 +13226,7 @@ div#notebook {
 </ul>
 <p>And <code>PyVarObject</code> includes <code>PyObject</code> as a part of it. In addition it contains <code>ob_size</code> indicating the <strong>number</strong> (rather than the byte size) of the basic objects it contains.</p>
 <p>For convenience, two Macros of HEAD is defined:</p>
+<p>[Includes/object.h]</p>
 <div class="highlight"><pre><span></span><span class="cm">/* PyObject_HEAD defines the initial segment of every PyObject. */</span>
 <span class="cp">#define PyObject_HEAD                   PyObject ob_base;</span>
 
@@ -13237,6 +13240,7 @@ div#notebook {
 <span class="cp">#define Py_INVALID_SIZE (Py_ssize_t)-1</span>
 </pre></div>
 <p>Initialization for these two heads is like this:</p>
+<p>[Includes/object.h]</p>
 <div class="highlight"><pre><span></span><span class="cp">#define PyObject_HEAD_INIT(type)        \</span>
 <span class="cp">    { _PyObject_EXTRA_INIT              \    </span><span class="c1">// we just ignore &quot;EXTRA&quot;</span>
     <span class="mi">1</span><span class="p">,</span> <span class="n">type</span> <span class="p">},</span>
@@ -13252,6 +13256,7 @@ div#notebook {
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Type-Object">Type Object<a class="anchor-link" href="#Type-Object">&#182;</a></h2><h3 id="1.-Definition">1. Definition<a class="anchor-link" href="#1.-Definition">&#182;</a></h3><p>Definition of <code>PyTypeObject</code> is like this:</p>
+<p>[Objects/typeobject.c]</p>
 <div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">_typeobject</span> <span class="p">{</span>
     <span class="n">PyObject_VAR_HEAD</span>
     <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tp_name</span><span class="p">;</span> <span class="cm">/* For printing, in format &quot;&lt;module&gt;.&lt;name&gt;&quot; */</span>
@@ -13354,6 +13359,57 @@ div#notebook {
 </pre></div>
 <p>Actually, a type can own all three kind of methods.</p>
 <p>Type objects for standard built-in types are statically initialized in memory when Python interpreter launches.</p>
+<h4 id="A-few-more-about-methods">A few more about methods<a class="anchor-link" href="#A-few-more-about-methods">&#182;</a></h4><p>Have a look at some methods' declarations:</p>
+<p>[Includes/object.h]</p>
+<div class="highlight"><pre><span></span><span class="cm">/*</span>
+<span class="cm">Type objects contain a string containing the type name (to help somewhat</span>
+<span class="cm">in debugging), the allocation parameters (see PyObject_New() and</span>
+<span class="cm">PyObject_NewVar()),</span>
+<span class="cm">and methods for accessing objects of the type.  Methods are optional, a</span>
+<span class="cm">nil pointer meaning that particular kind of access is not available for</span>
+<span class="cm">this type.  The Py_DECREF() macro uses the tp_dealloc method without</span>
+<span class="cm">checking for a nil pointer; it should always be implemented except if</span>
+<span class="cm">the implementation can guarantee that the reference count will never</span>
+<span class="cm">reach zero (e.g., for statically allocated type objects).</span>
+
+<span class="cm">NB: the methods for certain type groups are now contained in separate</span>
+<span class="cm">method blocks.</span>
+<span class="cm">*/</span>
+
+<span class="k">typedef</span> <span class="n">PyObject</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">unaryfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">PyObject</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">binaryfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">PyObject</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">ternaryfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">int</span> <span class="p">(</span><span class="o">*</span><span class="n">inquiry</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">Py_ssize_t</span> <span class="p">(</span><span class="o">*</span><span class="n">lenfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ssizeargfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">Py_ssize_t</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ssizessizeargfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">Py_ssize_t</span><span class="p">,</span> <span class="n">Py_ssize_t</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">int</span><span class="p">(</span><span class="o">*</span><span class="n">ssizeobjargproc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">Py_ssize_t</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">int</span><span class="p">(</span><span class="o">*</span><span class="n">ssizessizeobjargproc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">Py_ssize_t</span><span class="p">,</span> <span class="n">Py_ssize_t</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">int</span><span class="p">(</span><span class="o">*</span><span class="n">objobjargproc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+</pre></div>
+<p>In the beginning I was wondering about the usage of <code>typedef</code>. In fact here <code>typedef</code> is used for function pointers. For example,</p>
+<div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="n">PyObject</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">unaryfunc</span><span class="p">)(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">);</span>
+</pre></div>
+<p>means you define the function pointer with <code>RET: PyObject *, PARA: PyObject *</code> as type <code>unaryfunc</code>. Then every time when you need to declare or define a funtion for unary operation, you can just use <code>unaryfunc some_func;</code>. Here is an example of such usage:</p>
+<p>[Includes/object.h]</p>
+<div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="cm">/* Number implementations must check *both*</span>
+<span class="cm">       arguments for proper type and implement the necessary conversions</span>
+<span class="cm">       in the slot functions themselves. */</span>
+    <span class="p">...</span>
+    <span class="n">unaryfunc</span> <span class="n">nb_negative</span><span class="p">;</span>
+    <span class="n">unaryfunc</span> <span class="n">nb_positive</span><span class="p">;</span>
+    <span class="n">unaryfunc</span> <span class="n">nb_absolute</span><span class="p">;</span>
+    <span class="p">...</span>
+<span class="p">}</span> <span class="n">PyNumberMethods</span><span class="p">;</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="3.-Type-of-objects:">3. Type of objects:<a class="anchor-link" href="#3.-Type-of-objects:">&#182;</a></h3><p>Let's see some results:</p>
 
 </div>
@@ -13564,6 +13620,7 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Base-of-Type-Object"><em>Base</em> of Type Object<a class="anchor-link" href="#Base-of-Type-Object">&#182;</a></h2><p>In Java, every object has its <em>base</em>, except some built-in type like <code>int</code> (though <code>Integer</code> has the base <code>Object</code>). In Python, however, instance (or, object) of built-in type does <strong>NOT</strong> have base. Similarly instance of user-defined class also has no base.</p>
 <p>Rather, the built-in Type Objects and user-defined Classes (yet another Type Object) have base, and their base is <code>PyBaseObject_Type</code></p>
+<p>[Object/typeobject.c]</p>
 <div class="highlight"><pre><span></span><span class="n">PyTypeObject</span> <span class="n">PyBaseObject_Type</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">PyVarObject_HEAD_INIT</span><span class="p">(</span><span class="o">&amp;</span><span class="n">PyType_Type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="s">&quot;object&quot;</span><span class="p">,</span>                                   <span class="cm">/* tp_name */</span>
