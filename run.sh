@@ -1,6 +1,7 @@
 #!/bin/bash
 # checkout
 git checkout -B gh-pages
+git pull
 
 # clear
 ./publish.sh clear
