@@ -1,12 +1,12 @@
 #!/bin/bash
 # clear
 ./publish.sh clear
+rm -r docs
 
 # publish
 ./publish.sh
 
 # update docs
-rm -r docs
 mkdir docs
 mv index.html docs/index.html
 mv pages docs/pages
