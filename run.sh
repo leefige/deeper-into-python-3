@@ -8,7 +8,6 @@ rm docs/index.html
 ./publish.sh
 
 # update docs
-mkdir docs
 mv index.html docs/index.html
 mv pages docs/pages
 
