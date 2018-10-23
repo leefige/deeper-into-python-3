@@ -18,3 +18,6 @@ git push origin gh-pages
 
 # checkout
 git checkout master
+
+# clear
+./publish.sh clear
