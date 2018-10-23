@@ -1,7 +1,8 @@
 #!/bin/bash
 # clear
 ./publish.sh clear
-rm -r docs
+rm -r docs/pages
+rm docs/index.html
 
 # publish
 ./publish.sh
