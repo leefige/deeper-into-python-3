@@ -1,15 +1,15 @@
 #!/bin/bash
 # checkout
-git checkout gh-pages
+git checkout -B gh-pages
 
 # clear
-./publish clear
+./publish.sh clear
 
 # merge
 git merge master
 
 # publish
-./publish
+./publish.sh
 
 # commit & push
 git add .
