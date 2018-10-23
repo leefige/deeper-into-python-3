@@ -2,7 +2,7 @@
 
 Markdown=./Markdown
 Notebook=./Notebook
-HTML=./HTML
+HTML=./pages
 Tex=./Tex
 PDF=./PDF
 Slides=./Slides
@@ -74,6 +74,8 @@ for f in "${arr[@]}"; do
         cd ..
     fi
 done
+
+rm $HTML/Index.html
 
 echo "All notebooks converted!"
 
